@@ -1,51 +1,98 @@
 # SwiftUIDialogScaffold
 
 ```swift
-struct DialogView: View {
+struct CalendarDialog: View {
     
-    let backgroundColor: Color
-    let foregroundColor: Color
-    let horizontalPadding: CGFloat
-    @State private var animate: Bool = false
     @Binding var show: Bool
-    let onConfirm: () -> Void
+    @Binding var currentDate: Date
+    let onDayClick: (Date) -> Void
+    
+    @GestureState private var gestureOffset: CGFloat = 0
+    @State private var draggedOffset: CGSize = .zero
     
     var body: some View {
-        ZStack {
+        
+        
+        VStack(spacing: 0) {
             
-            backgroundColor
-                .ignoresSafeArea()
-                .opacity(animate ? 1 : 0)
-                .animation(.easeInOut(duration: 0.8))
+            Spacer()
             
             VStack(spacing: 0) {
+                Capsule()
+                    .foregroundColor(Color(red: 229/255, green: 229/255, blue: 235/255))
+                    .frame(width: 75, height: 5)
+                    .adaptivePadding(.top, 16)
+                    .adaptivePadding(.bottom, 27)
                 
-                VStack(spacing: 0) {
-                                      
-//                    Button {
-//                        FeedbackGenerator.generate()
-//                        animate = false
-//                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-//                            self.show.toggle()
-//                            onConfirm()
-//                        }
-//                    } label: {
-//                        Text("OK")
-//                    }
-//                    .buttonStyle(PlainButtonStyle())
+                
+                CustomDatePicker(currentDate: $currentDate,
+                                 onDayClick: { date in
+                    onDayClick(date)
+                })
+                .adaptivePadding(.horizontal, 37)
+                .adaptivePadding(.bottom, 24)
+                
+                HStack(spacing: 0) {
+                    CustomButton {
+                        show = false
+                    } content: {
+                        Text("취소")
+                            .foregroundColor(Color(red: 51/255, green: 51/255, blue: 51/255))
+                            .adaptiveFrame(width: 100, height: 40)
+                            .background(Color.clear)
+                            .cornerRadius(5)
+                            .adaptiveFontSize(14)
+                    }
+                    
+                    Spacer()
+                    
+                    CustomButton {
+                        show = false
+                    } content: {
+                        Text("선택")
+                            .foregroundColor(.white)
+                            .adaptiveFrame(width: 100, height: 40)
+                            .background(Color(red: 0/255, green: 149/255, blue: 255/255))
+                            .cornerRadius(5)
+                            .adaptiveFontSize(14)
+                    }
                     
                 }
+                .adaptivePadding(.horizontal, 41)
+                .adaptivePadding(.bottom, 51.8)
+                
                 
             } //: VSTACK
-            .background(foregroundColor)
-            .cornerRadius(16)
-            .padding(.horizontal, horizontalPadding)
-            .offset(y: animate ? 0 : UIScreen.main.bounds.height)
-            .animation(.interpolatingSpring(mass: 1, stiffness: 100, damping: 20, initialVelocity: 0))
-            .onAppear {
-                animate = true
-            }
-        } //: ZSTACK
+            .animation(.spring())
+            .frame(maxWidth: .infinity, alignment: .bottom)
+            .background(
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(Color.white)
+                    .shadow(color: .gray, radius: 10, x: 0, y: 2)
+            )
+            .offset(y: self.draggedOffset.height)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            self.draggedOffset = value.translation
+                        }
+                    }
+                    .onEnded { value in
+                        
+                        if value.translation.height > UIScreen.main.bounds.height / 5 {
+                            self.draggedOffset = .zero
+                            show = false
+                            return
+                        }
+                        self.draggedOffset = .zero
+                    }
+            )
+    
+            
+        } //: VSTACK
+        .ignoresSafeArea()
+        .offset(y: show ? 0 : UIScreen.main.bounds.height)
     }
 }
 ```
